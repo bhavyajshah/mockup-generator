@@ -5,12 +5,38 @@ import { useDropzone } from 'react-dropzone';
 import { Upload } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { validateImage } from '@/lib/utils/image-processor';
+import { useToast } from '@/hooks/use-toast';
 
 interface UploadZoneProps {
   onFilesAccepted: (files: File[]) => void;
 }
 
 export function UploadZone({ onFilesAccepted }: UploadZoneProps) {
+  const { toast } = useToast();
+
+  const uploadToSupabase = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      return data.url;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  };
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     try {
       const validFiles = await Promise.all(
@@ -19,11 +45,25 @@ export function UploadZone({ onFilesAccepted }: UploadZoneProps) {
           return file;
         })
       );
-      onFilesAccepted(validFiles);
+
+      // Upload first file to Supabase
+      const url = await uploadToSupabase(validFiles[0]);
+      
+      toast({
+        title: "Upload successful",
+        description: "Your image has been uploaded successfully.",
+      });
+
+      onFilesAccepted([validFiles[0]]);
     } catch (error) {
-      console.error('File validation error:', error);
+      console.error('File validation/upload error:', error);
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : 'Failed to upload file',
+      });
     }
-  }, [onFilesAccepted]);
+  }, [onFilesAccepted, toast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

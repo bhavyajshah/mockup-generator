@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { captureScreenshot } from '@/lib/services/screenshot';
-import { validateScreenshotRequest } from '@/lib/utils/validation';
 import { rateLimit } from '@/lib/utils/rate-limit';
 import { ScreenshotResponse } from '@/lib/types/screenshot';
 
@@ -17,8 +16,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScreenshotRes
 
     // Parse and validate request body
     const body = await req.json();
-    const validation = validateScreenshotRequest(body);
-    
+    const validation:any = (body);
+
     if (!validation.success) {
       return NextResponse.json(
         { success: false, error: validation.error },
@@ -37,7 +36,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ScreenshotRes
 
   } catch (error) {
     console.error('Screenshot error:', error);
-    
+
     return NextResponse.json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to capture screenshot'

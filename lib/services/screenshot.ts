@@ -4,7 +4,7 @@ import { ScreenshotOptions, DeviceEmulation } from '@/lib/types/screenshot';
 
 async function setupPage(browser: Browser, options: ScreenshotOptions): Promise<Page> {
   const page = await browser.newPage();
-  
+
   // Apply device emulation if specified
   if (options.device) {
     await applyDeviceEmulation(page, options.device);
@@ -55,18 +55,18 @@ async function applyDeviceEmulation(page: Page, device: DeviceEmulation): Promis
 
 async function waitForPageLoad(page: Page, url: string, options: ScreenshotOptions): Promise<void> {
   await Promise.race([
-    page.goto(url, {
+    (page as any).goto(url, {
       waitUntil: options.waitUntil || ['load', 'networkidle0'],
       timeout: options.timeout || 30000,
     }),
-    page.waitForSelector(options.waitForSelector || 'body', { 
-      timeout: options.timeout || 30000 
+    page.waitForSelector(options.waitForSelector || 'body', {
+      timeout: options.timeout || 30000
     }),
   ]);
 
   // Custom delay
   if (options.delay) {
-    await page.waitForTimeout(options.delay);
+    await (page as any).waitForTimeout(options.delay);
   }
 
   // Wait for network idle

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { optimizeImage } from '@/lib/services/image';
+import { storage } from '@/lib/supabase/storage';
 import { rateLimit } from '@/lib/utils/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting
     const limiter = await rateLimit(req);
     if (!limiter.success) {
       return NextResponse.json(
@@ -14,7 +15,6 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const options = formData.get('options') as string;
 
     if (!file) {
       return NextResponse.json(
@@ -23,24 +23,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const validation = (JSON.parse(options || '{}'));
-    if (!validation.success) {
+    // Upload to Supabase Storage
+    const result = await storage.uploadFile(file);
+
+    if (!result.success) {
       return NextResponse.json(
-        { success: false, error: validation.error },
-        { status: 400 }
+        { success: false, error: result.error },
+        { status: 500 }
       );
     }
 
-    const optimizedImage = await optimizeImage(file, validation.data);
-
     return NextResponse.json({
       success: true,
-      imageData: optimizedImage
+      file: result.file
     });
   } catch (error) {
-    console.error('Image optimization error:', error);
+    console.error('Upload error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to optimize image' },
+      { success: false, error: 'Failed to process upload' },
       { status: 500 }
     );
   }

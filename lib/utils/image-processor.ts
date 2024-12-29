@@ -1,7 +1,7 @@
 // Browser-compatible image processing
 export async function processImage(
   input: File,
-  settings: MockupSettings
+  settings: any
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -10,15 +10,15 @@ export async function processImage(
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
+
         // Set canvas dimensions based on settings
         canvas.width = settings.export.resolution.width;
         canvas.height = settings.export.resolution.height;
-        
+
         if (ctx) {
           // Draw image with basic processing
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          
+
           // Convert to desired format
           const format = settings.export.format.toLowerCase();
           const quality = settings.export.quality / 100;

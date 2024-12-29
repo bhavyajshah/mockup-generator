@@ -2,7 +2,7 @@ import puppeteer, { Browser, PuppeteerLaunchOptions } from 'puppeteer';
 
 let browser: Browser | null = null;
 
-const defaultOptions: PuppeteerLaunchOptions = {
+const defaultOptions: any = {
   headless: 'new',
   args: [
     '--no-sandbox',

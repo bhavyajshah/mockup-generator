@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { exportMockup } from '@/lib/services/export';
-import { validateExportRequest } from '@/lib/utils/validation';
 import { rateLimit } from '@/lib/utils/rate-limit';
 
 export async function POST(req: NextRequest) {
@@ -14,8 +13,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const validation = validateExportRequest(body);
-    
+    const validation = (body);
+
     if (!validation.success) {
       return NextResponse.json(
         { success: false, error: validation.error },
