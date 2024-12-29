@@ -14,14 +14,9 @@ interface PreviewCanvasProps {
 }
 
 export function PreviewCanvas({ imageUrl, deviceConfig, mockupSettings }: PreviewCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (!imageUrl || !canvasRef.current) return;
-    // Canvas rendering logic here
-  }, [imageUrl, deviceConfig, mockupSettings]);
+  const deviceFrameRef = useRef<HTMLDivElement>(null);
 
   const handleExport = async () => {
     if (!imageUrl) return;
@@ -47,7 +42,6 @@ export function PreviewCanvas({ imageUrl, deviceConfig, mockupSettings }: Previe
         throw new Error(data.error || 'Export failed');
       }
 
-      // Create download link
       const link = document.createElement('a');
       link.href = data.url;
       link.download = `mockup.${mockupSettings.export.format.toLowerCase()}`;
@@ -67,6 +61,32 @@ export function PreviewCanvas({ imageUrl, deviceConfig, mockupSettings }: Previe
       });
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const getDeviceStyles = () => {
+    const baseStyles = {
+      width: '80%',
+      maxWidth: '1200px',
+      margin: '0 auto',
+      position: 'relative' as const,
+      transform: `scale(${deviceConfig.scale})`,
+    };
+
+    switch (deviceConfig.type) {
+      case 'desktop':
+        return {
+          ...baseStyles,
+          aspectRatio: '16/10',
+        };
+      case 'mobile':
+        return {
+          ...baseStyles,
+          width: '40%',
+          aspectRatio: '9/19',
+        };
+      default:
+        return baseStyles;
     }
   };
 
@@ -99,12 +119,59 @@ export function PreviewCanvas({ imageUrl, deviceConfig, mockupSettings }: Previe
         </div>
       </div>
 
-      <div className="relative aspect-video bg-accent/50 rounded-lg overflow-hidden backdrop-blur-sm">
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
-        />
-        {!imageUrl && (
+      <div
+        className="relative aspect-video bg-accent/50 rounded-lg overflow-hidden backdrop-blur-sm"
+        style={{ backgroundColor: mockupSettings.background.value }}
+      >
+        {imageUrl ? (
+          <div
+            ref={deviceFrameRef}
+            className="absolute inset-0 flex items-center justify-center transition-transform duration-300"
+            style={getDeviceStyles()}
+          >
+            {/* Device Frame */}
+            <div
+              className="relative w-full h-full"
+              style={{
+                backgroundColor: deviceConfig.color,
+                boxShadow: mockupSettings.effects.shadow
+                  ? `0 ${mockupSettings.effects.depth}px ${mockupSettings.effects.depth * 2}px rgba(0,0,0,0.3)`
+                  : 'none'
+              }}
+            >
+              {/* Screen Content */}
+              <div className="absolute inset-[8%] top-[5%] overflow-auto bg-white rounded-lg">
+                <img
+                  src={imageUrl}
+                  alt="Preview"
+                  className="w-full h-auto"
+                  style={{
+                    minHeight: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+                {mockupSettings.effects.reflection && (
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: 'linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)'
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Device Frame Overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  backgroundImage: `url('https://png.pngtree.com/png-clipart/20230222/ourmid/pngtree-macbook-pro-16-png-image_6614408.png')`,
+                  backgroundSize: 'contain',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              />
+            </div>
+          </div>
+        ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center space-y-2">
               <p className="text-lg font-medium">No preview available</p>
